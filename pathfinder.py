@@ -1,5 +1,6 @@
 from scipy import sparse
 
+
 class PathFinder:
     """
     Find shortest paths in a 2D heightmap.
