@@ -7,7 +7,7 @@ def mapgen(ns, ew, seed):
     noise_map = np.zeros((ns, ew))
     for scale in range(4):
         noise = PerlinNoise(octaves=2 ** scale, seed=seed)
-        layer = np.array([
+        layer = np.sqrt(ns**2 +ew**2) * np.array([
             [noise([lat / ns, lon / ew]) for lon in range(ew)]
             for lat in range(ns)
         ])

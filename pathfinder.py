@@ -69,7 +69,7 @@ class PathFinder:
         """
         return np.reshape(
             a=self._dijkstra(source_ij),
-            newshape=(len(source_ij), self._stride, -1)
+            newshape=(len(source_ij), -1, self._stride)
         )
 
     # TODO: implement!!!
@@ -86,8 +86,22 @@ class PathFinder:
 if __name__ == "__main__":
     from mapgen import mapgen
     import matplotlib.pyplot as plt
+    from matplotlib import cm
 
-    hmap = mapgen(100, 120, 0)
+    ns = 100
+    ew = 120
+
+    # hmap = np.zeros((ns, ew))
+    hmap = mapgen(ns, ew, 0)
     pf = PathFinder(hmap)
     darr = pf.distances([(50, 60)])
-    print(darr)
+
+    X, Y = np.meshgrid(np.arange(ew), np.arange(ns))
+    color = cm.gray(1 - darr[0] / darr.max())
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    surf = ax.plot_surface(X, Y, hmap, rstride=1, cstride=1,
+                           facecolors=color,
+                           linewidth=0, antialiased=False)
+    plt.show()
