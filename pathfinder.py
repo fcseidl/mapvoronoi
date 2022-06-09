@@ -92,7 +92,7 @@ if __name__ == "__main__":
     ew = 120
 
     # hmap = np.zeros((ns, ew))
-    hmap = mapgen(ns, ew, 0)
+    hmap = mapgen(ns, ew, 1)
     pf = PathFinder(hmap)
     darr = pf.distances([(50, 60)])
 
