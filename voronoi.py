@@ -12,28 +12,30 @@ class Voronoi:
     height maps.
     """
 
-    def __init__(self, heightmap, sites):
+    def __init__(self, heightmap, sites, verbose=True):
         ns, _ = heightmap.shape
         self._hmap = heightmap
-        self._sites = sites
 
         # color visualization of heightmap
+        if verbose:
+            print("Computing pretty colors...")
         norm = plt.Normalize()
         self._colors = cm.terrain(norm(heightmap))
 
         # find the nearest sites to each point
+        if verbose:
+            print("Building sparse graph...")
         pf = PathFinder(heightmap)
-        darr = pf.distances(sites)
-        self._nearest = np.argmin(
-            darr, axis=0
-        ).astype(np.uint8)
+        if verbose:
+            print("Running dijkstra's algorithm...")
+        self._nearest = pf.nearest(sites)
 
         # find and draw voronoi boundaries
-        can = cv2.Canny(self._nearest, 1, 1)
+        can = cv2.Canny(self._nearest.astype(np.uint8), 1, 1)
         self._colors[can > 0] = (0, 0, 0, 1)
 
         # draw each site
-        for i, j in self._sites:
+        for i, j in sites:
             cv2.circle(
                 img=self._colors,
                 center=(j, i),
@@ -59,23 +61,18 @@ class Voronoi:
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        surf = ax.plot_surface(X, Y, self._hmap,
-                               rstride=1, cstride=1,
-                               facecolors=self._colors,
-                               linewidth=0, antialiased=False)
-        ij = np.array(self._sites)
-        ax.scatter3D(
-            ij[:, 1], ij[:, 0],
-            [self._hmap[s[0], s[1]] for s in ij],
-            color='black', s=50
-        )
+        ax.plot_surface(X, Y, self._hmap,
+                        rstride=1, cstride=1,
+                        facecolors=self._colors,
+                        linewidth=0, antialiased=False)
         plt.show()
 
 
 if __name__ == "__main__":
     from mapgen import mapgen
 
-    hmap = mapgen(50, 50, 6)
-    sites = [(25, 11), (9, 41), (22, 3)]
+    print("Generating terrain...")
+    hmap = mapgen(1000, 1000, 42)
+    sites = [(706, 119), (391, 104), (200, 444), (689, 946)]
     voro = Voronoi(hmap, sites)
-    voro.plot_flat()
+    voro.plot3d()

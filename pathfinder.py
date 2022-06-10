@@ -60,6 +60,19 @@ class PathFinder:
             indices=u,
             **kwargs)
 
+    def nearest(self, source_ij):
+        """
+        Return an array of the same shape as the heightmap
+        whose ij entry is the index of the nearest point
+        in source_ij.
+        """
+        _, __, sources = self._dijkstra(
+            source_ij,
+            return_predecessors=True,
+            min_only=True
+        )
+        return sources.reshape(-1, self._stride)
+
     def distances(self, source_ij):
         """
         Return a 3D array whose k,l,m entry is the distance
