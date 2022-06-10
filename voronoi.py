@@ -13,7 +13,7 @@ class Voronoi:
     """
 
     def __init__(self, heightmap, sites):
-        ns, ew = heightmap.shape
+        ns, _ = heightmap.shape
         self._hmap = heightmap
         self._sites = sites
 
@@ -29,22 +29,18 @@ class Voronoi:
         ).astype(np.uint8)
 
         # find and draw voronoi boundaries
-        contours, _ = cv2.findContours(
-            self._nearest,
-            mode=cv2.RETR_LIST,
-            method=cv2.CHAIN_APPROX_SIMPLE
-        )
-        cv2.drawContours(
-            self._colors,
-            contours,
-            contourIdx=-1,
-            color=(0, 0, 0),
-            thickness=1
-        )
+        can = cv2.Canny(self._nearest, 1, 1)
+        self._colors[can > 0] = (0, 0, 0, 1)
 
         # draw each site
         for i, j in self._sites:
-            pass
+            cv2.circle(
+                img=self._colors,
+                center=(j, i),
+                radius=int(ns / 50),
+                color=(.7, 0, .7, 1),
+                thickness=-1
+            )
 
     def plot_flat(self):
         """
@@ -79,7 +75,7 @@ class Voronoi:
 if __name__ == "__main__":
     from mapgen import mapgen
 
-    hmap = mapgen(100, 100, 40)
-    sites = [(50, 11), (19, 69), (79, 50)]
+    hmap = mapgen(50, 50, 6)
+    sites = [(25, 11), (9, 41), (22, 3)]
     voro = Voronoi(hmap, sites)
     voro.plot_flat()
