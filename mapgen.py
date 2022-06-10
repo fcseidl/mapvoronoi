@@ -7,7 +7,7 @@ def mapgen(ns, ew, seed):
     noise_map = np.zeros((ns, ew))
     for scale in range(4):
         noise = PerlinNoise(octaves=2 ** scale, seed=seed)
-        layer = np.sqrt(ns**2 +ew**2) * np.array([
+        layer = np.sqrt(ns**2 + ew**2) * np.array([
             [noise([lat / ns, lon / ew]) for lon in range(ew)]
             for lat in range(ns)
         ])
@@ -18,11 +18,11 @@ def mapgen(ns, ew, seed):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    terrain = mapgen(100, 100, 3)
+    terrain = mapgen(100, 100, 5)
     X, Y = np.meshgrid(np.arange(100), np.arange(100))
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    surf = ax.plot_surface(X, Y, terrain, cmap='gray',
+    surf = ax.plot_surface(X, Y, terrain, cmap='terrain',
                            linewidth=0, antialiased=False)
     plt.show()

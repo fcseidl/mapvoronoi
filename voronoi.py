@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
+import cv2
 
 from pathfinder import PathFinder
 
@@ -10,15 +12,39 @@ class Voronoi:
     height maps.
     """
 
-    def __init__(self, heightmap, sites, colors):
+    def __init__(self, heightmap, sites):
+        ns, ew = heightmap.shape
         self._hmap = heightmap
         self._sites = sites
 
+        # color visualization of heightmap
+        norm = plt.Normalize()
+        self._colors = cm.terrain(norm(heightmap))
+
+        # find the nearest sites to each point
         pf = PathFinder(heightmap)
         darr = pf.distances(sites)
-        self._nearest = np.argmin(darr, axis=0)
-        self._colors = [[colors[n] for n in row]
-                        for row in self._nearest]
+        self._nearest = np.argmin(
+            darr, axis=0
+        ).astype(np.uint8)
+
+        # find and draw voronoi boundaries
+        contours, _ = cv2.findContours(
+            self._nearest,
+            mode=cv2.RETR_LIST,
+            method=cv2.CHAIN_APPROX_SIMPLE
+        )
+        cv2.drawContours(
+            self._colors,
+            contours,
+            contourIdx=-1,
+            color=(0, 0, 0),
+            thickness=1
+        )
+
+        # draw each site
+        for i, j in self._sites:
+            pass
 
     def plot_flat(self):
         """
@@ -55,6 +81,5 @@ if __name__ == "__main__":
 
     hmap = mapgen(100, 100, 40)
     sites = [(50, 11), (19, 69), (79, 50)]
-    colors = [(1, 0, 0, 0.2), (0, 1, 0, 0.2), (0, 0, 1, 0.2)]
-    voro = Voronoi(hmap, sites, colors)
-    voro.plot3d()
+    voro = Voronoi(hmap, sites)
+    voro.plot_flat()
