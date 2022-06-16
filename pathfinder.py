@@ -4,37 +4,58 @@ import numpy as np
 
 class PathFinder:
     """
-    Find the shortest paths in a 2D heightmap of a terrain.
+    Find the shortest paths in a terrain, considering
+    elevation and surface quality.
     """
 
-    def __init__(self, heightmap):
-        ns, ew = heightmap.shape
+    def __init__(self, elevation, mobility, nbd_size=8):
+        ns, ew = elevation.shape
         self._stride = ew
 
         data = []
         u = []
         v = []
+        print()
         for i in range(ns):
+            # print("Computing edge weights for row %d/%d" % (i + 1, ns))
             for j in range(ew):
-                # diagonal
-                for k, l in [(i - 1, j - 1), (i - 1, j + 1),
-                             (i + 1, j - 1), (i + 1, j + 1)]:
-                    if 0 <= k < ns and 0 <= l < ew:
-                        data.append(
-                            np.sqrt(
-                                2 + (heightmap[i, j] - heightmap[k, l]) ** 2))
-                        u.append(self._ij2u(i, j))
-                        v.append(self._ij2u(k, l))
-                # lateral
+                # cardinal
                 for k, l in [          (i-1, j),
                              (i, j-1),           (i, j + 1),
                                        (i+1, j)            ]:
                     if 0 <= k < ns and 0 <= l < ew:
                         data.append(
                             np.sqrt(
-                                1 + (heightmap[i, j] - heightmap[k, l]) ** 2))
+                                1 + (elevation[i, j] - elevation[k, l]) ** 2
+                            ) / (1e-6 + mobility[i, j] + mobility[j, k])
+                        )
                         u.append(self._ij2u(i, j))
                         v.append(self._ij2u(k, l))
+                # semi-cardinal
+                for k, l in [(i - 1, j - 1), (i - 1, j + 1),
+                             (i + 1, j - 1), (i + 1, j + 1)]:
+                    if 0 <= k < ns and 0 <= l < ew:
+                        data.append(
+                            np.sqrt(
+                                2 + (elevation[i, j] - elevation[k, l]) ** 2
+                            ) / (1e-6 + mobility[i, j] + mobility[j, k])
+                        )
+                        u.append(self._ij2u(i, j))
+                        v.append(self._ij2u(k, l))
+                # semi-semi-cardinal
+                if nbd_size == 16:
+                    for k, l in [                (i - 2, j - 1), (i - 2, j + 1),
+                                 (i - 1, j - 2),                                 (i - 1, j + 2),
+                                 (i + 1, j - 2),                                 (i + 1, j + 2),
+                                                 (i + 2, j - 1), (i + 2, j + 1)]:
+                        if 0 <= k < ns and 0 <= l < ew:
+                            data.append(
+                                np.sqrt(
+                                    5 + (elevation[i, j] - elevation[k, l]) ** 2
+                                ) / (1e-6 + mobility[i, j] + mobility[j, k])
+                            )
+                            u.append(self._ij2u(i, j))
+                            v.append(self._ij2u(k, l))
         self._graph = sparse.coo_matrix((data, (u, v)))
 
     # Flatten heightmap coordinates.
@@ -60,14 +81,14 @@ class PathFinder:
             indices=u,
             **kwargs)
 
-    def nearest(self, source_ij):
+    def nearest(self, source_xy):
         """
         Return an array of the same shape as the heightmap
-        whose ij entry is the index of the nearest point
-        in source_ij.
+        whose x,y entry is the index of the nearest point
+        in source_xy.
         """
         _, __, sources = self._dijkstra(
-            source_ij,
+            source_xy,
             return_predecessors=True,
             min_only=True
         )
@@ -86,8 +107,8 @@ class PathFinder:
         )
 
     # TODO: implement!!!
-    def shortest_path(self, i_source, j_source, 
-                            i_dest, j_dest):
+    def shortest_path(self, i_source, j_source,
+                      i_dest, j_dest):
         """
         Returns lists i_path, j_path whose kth entries are 
         i- and j-coordinates of the kth pixel on the shortest 
